@@ -48,7 +48,6 @@
           </button>
         </div>
 
-        
         <form>
           <div class="mb-3">
             <label class="form-label">Nombre</label>
@@ -65,71 +64,79 @@
           </div>
         </form>
 
-        
         <form>
           <div class="mb-3">
-            <label class="form-label">Primer número: </label>
+            <label class="form-label">Primer atributo: </label>
             <input
               type="text"
               class="form-control"
-              v-model="num1"
-              placeholder="Ingresa un número"
+              v-model="attribute1"
+              placeholder="Ingresa un atributo"
             />
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Segundo número: </label>
+            <label class="form-label">Segundo atributo: </label>
             <input
               type="text"
               class="form-control"
-              v-model="num2"
-              placeholder="Ingresa un número"
+              v-model="attribute2"
+              placeholder="Ingresa otro atributo"
             />
           </div>
 
           <div class="mb-3">
-            <button type="button" class="btn btn-custom w-100" @click="sumNumbers">
-              Sumar
+            <button type="button" class="btn btn-custom w-100" @click="enlist">
+              Enlistar
             </button>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label">Resultado</label>
-            <input type="number" class="form-control" v-model="result" readonly />
+          <div>
+            <ol>
+              <li v-for="(item) in list" :key="index">
+                {{ index  }} {{ item.attribute1 }}  {{ item.attribute2 }}
+              </li>
+            </ol>
           </div>
         </form>
       </div>
     </div>
 
-   
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
       const { createApp, ref } = Vue;
-        
+      
       createApp({
         setup() {
-          
           const message = ref("Mi primera app con Vue!");
+          const list = ref([]);
+          const attribute1 = ref("");
+          const attribute2 = ref("");
           const count = ref(0);
           const name = ref("");
-          const num1 = ref(0);
-          const num2 = ref(0);
-          const result = ref(0);
+          
+          const enlist = () => {
+            
+            list.value.push({
+              attribute1: attribute1.value,
+              attribute2: attribute2.value,
+            });
 
-          const sumNumbers = () => {
-            result.value = parseFloat(num1.value) + parseFloat(num2.value);
+            
+            attribute1.value = "";
+            attribute2.value = "";
           };
 
           return {
             message,
             count,
             name,
-            num1,
-            num2,
-            result,
-            sumNumbers,
+            attribute1,
+            attribute2,
+            list,
+            enlist
           };
         },
       }).mount("#app");
