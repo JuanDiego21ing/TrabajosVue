@@ -46,6 +46,33 @@
       .success {
         color: green;
       }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: white;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+
+      th {
+        background-color: #007bff;
+        color: white;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      tr:hover {
+        background-color: #e9ecef;
+      }
     </style>
   </head>
   <body>
@@ -88,6 +115,18 @@
         >
           {{ message }}
         </p>
+
+        <table v-if="Logged">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Address</th>
+            </tr>
+          </thead>
+          <tbody id="data-output"></tbody>
+        </table>
       </div>
     </div>
 
@@ -103,6 +142,7 @@
           const password = ref("");
           const message = ref("");
           const isError = ref(false);
+          const Logged = ref(false);
 
           const login = async () => {
             message.value = "";
@@ -111,7 +151,7 @@
               const response = await fetch("users.json");
               const usuarios = await response.json();
 
-              const usuarioValido = usuarios.find(
+              let usuarioValido = usuarios.find(
                 (user) =>
                   user.email === email.value && user.password === password.value
               );
@@ -119,6 +159,36 @@
               if (usuarioValido) {
                 message.value = "¡Bienvenido!";
                 isError.value = false;
+                Logged.value = true;
+
+                fetch("users.json")
+                  .then(function (response) {
+                    return response.json();
+                  })
+
+                  .then(function (users) {
+                    let placeholder = document.querySelector("#data-output");
+                    let out = "";
+
+                    for (let user of users) {
+                      out += `
+                              <tr>
+                                <td>${user.name}</td>
+                                <td>${user.username}</td>
+                                <td>${user.email}</td>
+                                <td>${user.address["street"]}</td>
+                                <td>
+                                    <button class="action-btn edit-btn">Edit</button>
+                                    <button class="action-btn delete-btn">Delete</button>
+                                </td>
+                                
+                              </tr>
+                              
+                              `;
+                    }
+
+                    placeholder.innerHTML = out;
+                  });
               } else {
                 message.value = "Revisa los campos, los datos no coinciden.";
                 isError.value = true;
@@ -135,6 +205,7 @@
             password,
             message,
             isError,
+            Logged,
             login,
           };
         },
