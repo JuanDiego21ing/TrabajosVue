@@ -7,7 +7,7 @@
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-9ndCyUa1z6paksn4aD+rmQWqL4d5OgFVXRpOCtxCW3YpF4Ql4He/t9gFgog1p6L3"
+      integrity="sha384-9ndCyUa1z6paksn4aD+rmQWqL4d5Og1p6L3"
       crossorigin="anonymous"
     />
     <style>
@@ -126,8 +126,60 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="data-output"></tbody>
+          <tbody>
+            <tr v-for="(user, index) in users" :key="index">
+              <td>{{ user.name }}</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.address.street }}</td>
+              <td>
+                <button class="action-btn edit-btn" @click="editUser(index)">
+                  Edit
+                </button>
+                <button
+                  class="action-btn delete-btn"
+                  @click="deleteUser(index)"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
         </table>
+
+        <div v-if="edit !== null" class="mt-4">
+          <h4>Editar usuario</h4>
+          <div class="mb-3">
+            <label class="form-label">Nombre:</label>
+            <input v-model="edit.name" class="form-control" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Usuario:</label>
+            <input v-model="edit.username" class="form-control" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Email:</label>
+            <input v-model="edit.email" class="form-control" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Dirección:</label>
+            <input v-model="edit.address.street" class="form-control" />
+          </div>
+
+          <button class="btn btn-success" @click="saveUser">
+            Guardar cambios
+          </button>
+          <button class="btn btn-secondary" @click="cancelEdit">
+            Cancelar
+          </button>
+        </div>
+
+        <button v-if="Logged" class="btn btn-danger mt-3" @click="logout">
+          Cerrar sesión
+        </button>
       </div>
     </div>
 
@@ -135,7 +187,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-      const { createApp, ref } = Vue;
+      const { createApp, ref, onMounted } = Vue;
 
       createApp({
         setup() {
@@ -144,6 +196,9 @@
           const message = ref("");
           const isError = ref(false);
           const Logged = ref(false);
+          const users = ref([]);
+          const edit = ref(null);
+          let editingIndex = null;
 
           const login = async () => {
             message.value = "";
@@ -161,45 +216,8 @@
                 message.value = "¡Bienvenido!";
                 isError.value = false;
                 Logged.value = true;
-
-                fetch("users.json")
-                  .then(function (response) {
-                    return response.json();
-                  })
-
-                  .then(function (users) {
-                    let placeholder = document.querySelector("#data-output");
-                    let out = "";
-
-                    users.forEach((user, index) => {
-                      out += `
-                        <tr id="row-${index}">
-                          <td>${user.name}</td>
-                          <td>${user.username}</td>
-                          <td>${user.email}</td>
-                          <td>${user.address["street"]}</td>
-                          <td>
-                              <button class="action-btn edit-btn">Edit</button>
-                              <button class="action-btn delete-btn" data-id="${index}">Delete</button>
-                          </td>
-                        </tr>
-                      `;
-                    });
-
-                    placeholder.innerHTML = out;
-
-                    document
-                      .querySelectorAll(".delete-btn")
-                      .forEach((button) => {
-                        button.addEventListener("click", function () {
-                          const id = this.getAttribute("data-id");
-                          const row = document.getElementById(`row-${id}`);
-                          if (row) {
-                            row.remove();
-                          }
-                        });
-                      });
-                  });
+                users.value = usuarios;
+                localStorage.setItem("loggedIn", "true");
               } else {
                 message.value = "Revisa los campos, los datos no coinciden.";
                 isError.value = true;
@@ -211,13 +229,62 @@
             }
           };
 
+          const deleteUser = (index) => {
+            users.value.splice(index, 1);
+          };
+
+          const editUser = (index) => {
+            edit.value = { ...users.value[index] };
+            editingIndex = index;
+          };
+
+          const saveUser = () => {
+            if (editingIndex !== null) {
+              users.value[editingIndex] = { ...edit.value };
+              cancelEdit();
+            }
+          };
+
+          const cancelEdit = () => {
+            edit.value = null;
+            editingIndex = null;
+          };
+
+          const checkSession = () => {
+            if (localStorage.getItem("loggedIn") === "true") {
+              Logged.value = true;
+              fetch("users.json")
+                .then((response) => response.json())
+                .then((usuarios) => {
+                  users.value = usuarios;
+                });
+            }
+          };
+
+          const logout = () => {
+            Logged.value = false;
+            localStorage.removeItem("loggedIn");
+            message.value = "Sesión cerrada correctamente.";
+          };
+
+          onMounted(() => {
+            checkSession();
+          });
+
           return {
             email,
             password,
             message,
             isError,
             Logged,
+            users,
             login,
+            deleteUser,
+            editUser,
+            edit,
+            saveUser,
+            cancelEdit,
+            logout,
           };
         },
       }).mount("#app");
