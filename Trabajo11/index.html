@@ -123,6 +123,7 @@
               <th>Username</th>
               <th>Email</th>
               <th>Address</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="data-output"></tbody>
@@ -170,24 +171,34 @@
                     let placeholder = document.querySelector("#data-output");
                     let out = "";
 
-                    for (let user of users) {
+                    users.forEach((user, index) => {
                       out += `
-                              <tr>
-                                <td>${user.name}</td>
-                                <td>${user.username}</td>
-                                <td>${user.email}</td>
-                                <td>${user.address["street"]}</td>
-                                <td>
-                                    <button class="action-btn edit-btn">Edit</button>
-                                    <button class="action-btn delete-btn">Delete</button>
-                                </td>
-                                
-                              </tr>
-                              
-                              `;
-                    }
+                        <tr id="row-${index}">
+                          <td>${user.name}</td>
+                          <td>${user.username}</td>
+                          <td>${user.email}</td>
+                          <td>${user.address["street"]}</td>
+                          <td>
+                              <button class="action-btn edit-btn">Edit</button>
+                              <button class="action-btn delete-btn" data-id="${index}">Delete</button>
+                          </td>
+                        </tr>
+                      `;
+                    });
 
                     placeholder.innerHTML = out;
+
+                    document
+                      .querySelectorAll(".delete-btn")
+                      .forEach((button) => {
+                        button.addEventListener("click", function () {
+                          const id = this.getAttribute("data-id");
+                          const row = document.getElementById(`row-${id}`);
+                          if (row) {
+                            row.remove();
+                          }
+                        });
+                      });
                   });
               } else {
                 message.value = "Revisa los campos, los datos no coinciden.";
