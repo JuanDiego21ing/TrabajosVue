@@ -78,7 +78,7 @@
   <body>
     <div id="app">
       <div class="container">
-        <h3>Login</h3>
+        <h1>Login</h1>
 
         <form>
           <div class="mb-3">
@@ -108,15 +108,61 @@
           </div>
         </form>
 
-        <p
-          v-if="message"
-          :class="{'error': isError, 'success': !isError}"
-          class="message"
+        <button
+          v-if="Logged && !showAddUserForm && !isEditing"
+          type="button"
+          class="btn btn-custom w-100 mt-3"
+          @click="showAddUserForm = !showAddUserForm"
         >
-          {{ message }}
-        </p>
+          Añadir Usuario
+        </button>
 
-        <table v-if="Logged">
+        <div v-if="showAddUserForm && !isEditing">
+          <h4 class="mt-3">Añadir Usuario</h4>
+          <form>
+            <div class="mb-3">
+              <label class="form-label">Nombre: </label>
+              <input type="text" class="form-control" v-model="newUser.name" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Usuario: </label>
+              <input
+                type="text"
+                class="form-control"
+                v-model="newUser.username"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email: </label>
+              <input
+                type="email"
+                class="form-control"
+                v-model="newUser.email"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Dirección: </label>
+              <input
+                type="text"
+                class="form-control"
+                v-model="newUser.address.street"
+              />
+            </div>
+            <button type="button" class="btn btn-success" @click="addUser">
+              Añadir Usuario
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary mt-2"
+              @click="cancelAddUser"
+            >
+              Cancelar
+            </button>
+          </form>
+        </div>
+
+        
+        <table v-if="Logged && !showAddUserForm && !isEditing">
           <thead>
             <tr>
               <th>Name</th>
@@ -134,21 +180,21 @@
               <td>{{ user.address.street }}</td>
               <td>
                 <button class="action-btn edit-btn" @click="editUser(index)">
-                  Edit
+                  Editar
                 </button>
                 <button
                   class="action-btn delete-btn"
                   @click="deleteUser(index)"
                 >
-                  Delete
+                  Eliminar
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
 
-        <div v-if="edit !== null" class="mt-4">
-          <h4>Editar usuario</h4>
+        <div v-if="isEditing">
+          <h4>Editar Usuario</h4>
           <div class="mb-3">
             <label class="form-label">Nombre:</label>
             <input v-model="edit.name" class="form-control" />
@@ -170,7 +216,7 @@
           </div>
 
           <button class="btn btn-success" @click="saveUser">
-            Guardar cambios
+            Guardar Cambios
           </button>
           <button class="btn btn-secondary" @click="cancelEdit">
             Cancelar
@@ -199,6 +245,15 @@
           const users = ref([]);
           const edit = ref(null);
           let editingIndex = null;
+          const showAddUserForm = ref(false);
+          const isEditing = ref(false);
+
+          const newUser = ref({
+            name: "",
+            username: "",
+            email: "",
+            address: { street: "" },
+          });
 
           const login = async () => {
             message.value = "";
@@ -216,8 +271,10 @@
                 message.value = "¡Bienvenido!";
                 isError.value = false;
                 Logged.value = true;
-                users.value = usuarios;
+                users.value =
+                  JSON.parse(localStorage.getItem("users")) || usuarios;
                 localStorage.setItem("loggedIn", "true");
+                localStorage.setItem("users", JSON.stringify(users.value));
               } else {
                 message.value = "Revisa los campos, los datos no coinciden.";
                 isError.value = true;
@@ -229,46 +286,58 @@
             }
           };
 
-          const deleteUser = (index) => {
-            users.value.splice(index, 1);
+          const addUser = () => {
+            users.value.push({ ...newUser.value });
+            localStorage.setItem("users", JSON.stringify(users.value));
+            newUser.value = {
+              name: "",
+              username: "",
+              email: "",
+              address: { street: "" },
+            };
+            showAddUserForm.value = false;
+          };
+
+          const cancelAddUser = () => {
+            showAddUserForm.value = false;
           };
 
           const editUser = (index) => {
             edit.value = { ...users.value[index] };
             editingIndex = index;
+            isEditing.value = true;
           };
 
           const saveUser = () => {
             if (editingIndex !== null) {
-              users.value[editingIndex] = { ...edit.value };
+              users.value.splice(editingIndex, 1, edit.value);
+              localStorage.setItem("users", JSON.stringify(users.value));
               cancelEdit();
             }
+          };
+
+          const deleteUser = (index) => {
+            users.value.splice(index, 1);
+            localStorage.setItem("users", JSON.stringify(users.value));
           };
 
           const cancelEdit = () => {
             edit.value = null;
             editingIndex = null;
-          };
-
-          const checkSession = () => {
-            if (localStorage.getItem("loggedIn") === "true") {
-              Logged.value = true;
-              fetch("users.json")
-                .then((response) => response.json())
-                .then((usuarios) => {
-                  users.value = usuarios;
-                });
-            }
+            isEditing.value = false;
           };
 
           const logout = () => {
             Logged.value = false;
             localStorage.removeItem("loggedIn");
-            message.value = "Sesión cerrada correctamente.";
+            message.value = "Sesión cerrada.";
           };
 
           onMounted(() => {
-            checkSession();
+            if (localStorage.getItem("loggedIn") === "true") {
+              Logged.value = true;
+              users.value = JSON.parse(localStorage.getItem("users")) || [];
+            }
           });
 
           return {
@@ -278,11 +347,16 @@
             isError,
             Logged,
             users,
-            login,
-            deleteUser,
-            editUser,
+            newUser,
             edit,
+            showAddUserForm,
+            isEditing,
+            login,
+            addUser,
+            cancelAddUser,
+            editUser,
             saveUser,
+            deleteUser,
             cancelEdit,
             logout,
           };
