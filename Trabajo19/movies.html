@@ -13,6 +13,17 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   </head>
+  <style>
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .btn {
+      align-self: center; 
+    }
+  </style>
   <body>
     <div id="app" class="container mt-5">
       <h1>Películas</h1>
@@ -24,7 +35,7 @@
             <div class="card-body">
               <h5 class="card-title">{{ movie.title }}</h5>
               <p class="card-text">{{ movie.overview }}</p>
-              <a :href="'movie.html?id=' + movie.id" class="btn btn-primary">Ver Detalle</a>
+              <a :href="'movie.html?id=' + movie.id" class="btn btn-primary">Descripcion</a>
             </div>
           </div>
         </div>
@@ -43,7 +54,11 @@
         },
         mounted() {
           axios
-            .get('https://api.themoviedb.org/3/movie/popular?api_key=7037848cb658e799620637a582ccf5d7&language=es-ES&page=1')
+            .get('https://api.themoviedb.org/3/movie/popular?language=es-ES&page=1', {
+              headers: {
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3MDM3ODQ4Y2I2NThlNzk5NjIwNjM3YTU4MmNjZjVkNyIsIm5iZiI6MTcyODU5NDgyMi44MjI3NzcsInN1YiI6IjY3MDc0N2RiNjcxODAxMmZjMjMzNzY3MSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.0LJoQOzNpMhMreuryqCDkt0wkPe48QXnmqivwqxitdo' 
+              }
+            })
             .then(response => {
               this.movies = response.data.results;
               this.loading = false;

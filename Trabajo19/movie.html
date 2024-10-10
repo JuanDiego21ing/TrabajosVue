@@ -7,27 +7,156 @@
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-      crossorigin="anonymous"
     />
+    <style>
+      .banner {
+        position: relative;
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+      }
+
+      .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1;
+        border-radius: 15px;
+      }
+
+      .content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        gap: 20px;
+      }
+
+      .movie-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .movie-info h1,
+      .movie-info h4,
+      .movie-info p {
+        margin-bottom: 10px;
+      }
+
+      .movie-info h1 {
+        font-size: 3rem;
+      }
+
+      .poster {
+        max-width: 300px;
+        border-radius: 10px;
+      }
+
+      .actors {
+        margin-top: 20px;
+      }
+
+      .actors h4 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+      }
+
+      .actors ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .actors li {
+        margin-bottom: 5px;
+      }
+
+      .rating-stars {
+        display: flex;
+        gap: 5px;
+        margin-top: 15px;
+      }
+
+      .rating-stars button {
+        background: none;
+        border: none;
+        color: gold;
+        font-size: 2rem;
+        cursor: pointer;
+      }
+
+      .rating-stars button:hover,
+      .rating-stars button.active {
+        color: darkorange;
+      }
+
+      .rating-stars button.inactive {
+        color: lightgray;
+      }
+
+      .rating-stars button.disabled {
+        pointer-events: none;
+        color: darkorange;
+      }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   </head>
   <body>
     <div id="app" class="container mt-5">
-      <h1>{{ movie.title }}</h1>
       <div v-if="loading" class="text-center">Cargando...</div>
-      <div v-if="!loading" class="row">
-        <div class="col-md-6">
-          <img :src="'https://image.tmdb.org/t/p/w500/' + movie.poster_path" class="img-fluid" alt="Poster" />
-        </div>
-        <div class="col-md-6">
-          <h4>Descripción</h4>
-          <p>{{ movie.overview }}</p>
-          
-          <h4>Rating: {{ movie.vote_average }}</h4>
-          <button @click="rateMovie" class="btn btn-primary">Añadir/Modificar Rating</button>
-          <button @click="deleteRating" class="btn btn-danger">Eliminar Rating</button>
+      <div v-if="!loading">
+        <div
+          class="banner"
+          :style="{ backgroundImage: 'url(https://image.tmdb.org/t/p/w1280/' + movie.backdrop_path + ')' }"
+        >
+          <div class="overlay"></div>
+          <div class="content">
+            <img
+              :src="'https://image.tmdb.org/t/p/w500/' + movie.poster_path"
+              class="poster"
+              alt="Poster"
+            />
+            <div class="movie-info">
+              <h1>{{ movie.title }}</h1>
+              <h4>Rating promedio: {{ movie.vote_average }}</h4>
+              <p>{{ movie.overview }}</p>
+
+              <div class="rating-section">
+                <h4>Agrega una Calificación:</h4>
+                <div class="rating-stars">
+                  <button
+                    v-for="star in 10"
+                    :key="star"
+                    @click="rateMovie(star)"
+                    :class="[starClass(star), {'disabled': userRating !== null}]"
+                  >
+                    ★
+                  </button>
+                </div>
+                <button
+                  v-if="userRating"
+                  @click="deleteRating"
+                  class="btn btn-danger mt-2"
+                >
+                  Eliminar Calificación
+                </button>
+              </div>
+
+              <div class="actors">
+                <h4>Actores Principales:</h4>
+                <ul>
+                  <li v-for="actor in actors" :key="actor.id">
+                    {{ actor.name }} / {{ actor.character }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -39,50 +168,77 @@
         data() {
           return {
             movie: {},
+            actors: [],
+            userRating: null,
             loading: true,
+            apiKey: "7037848cb658e799620637a582ccf5d7",
           };
         },
         methods: {
-          rateMovie() {
-            const rating = prompt("Introduce un rating (0-10):");
-            if (rating !== null) {
-              axios.post(`https://api.themoviedb.org/3/movie/${this.movie.id}/rating?api_key=7037848cb658e799620637a582ccf5d7`, {
-                value: parseFloat(rating)
-              })
-              .then(response => {
-                alert('Rating actualizado');
-                this.fetchMovieDetails();
-              })
-              .catch(error => console.error(error));
-            }
-          },
-          deleteRating() {
-            axios.delete(`https://api.themoviedb.org/3/movie/${this.movie.id}/rating?api_key=7037848cb658e799620637a582ccf5d7`)
-              .then(response => {
-                alert('Rating eliminado');
-                this.fetchMovieDetails();
-              })
-              .catch(error => console.error(error));
-          },
           fetchMovieDetails() {
             const urlParams = new URLSearchParams(window.location.search);
-            const movieId = urlParams.get('id');
+            const movieId = urlParams.get("id");
             axios
-              .get(`https://api.themoviedb.org/3/movie/${movieId}?api_key=7037848cb658e799620637a582ccf5d7&language=es-ES`)
-              .then(response => {
+              .get(
+                `https://api.themoviedb.org/3/movie/${movieId}?api_key=${this.apiKey}&language=es-ES`
+              )
+              .then((response) => {
                 this.movie = response.data;
                 this.loading = false;
               })
-              .catch(error => {
+              .catch((error) => {
                 console.error(error);
                 this.loading = false;
               });
+            axios
+              .get(
+                `https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${this.apiKey}`
+              )
+              .then((response) => {
+                this.actors = response.data.cast.slice(0, 5);
+              })
+              .catch((error) => {
+                console.error(error);
+              });
+          },
+          rateMovie(star) {
+            this.userRating = star;
+            const movieId = this.movie.id;
+            axios
+              .post(
+                `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${this.apiKey}`,
+                {
+                  value: star * 2,
+                }
+              )
+              .then((response) => {
+                alert("Calificación guardada");
+              })
+              .catch((error) => console.error(error));
+          },
+          deleteRating() {
+            const movieId = this.movie.id;
+            axios
+              .delete(
+                `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${this.apiKey}`
+              )
+              .then((response) => {
+                alert("Calificación eliminada");
+                this.userRating = null;
+              })
+              .catch((error) => console.error(error));
+          },
+          starClass(star) {
+            if (this.userRating && star <= this.userRating) {
+              return "active";
+            }
+            return "inactive";
           },
         },
         mounted() {
           this.fetchMovieDetails();
         },
-      }).mount('#app');
+      }).mount("#app");
     </script>
   </body>
 </html>

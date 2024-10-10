@@ -75,6 +75,11 @@
         button:hover {
             background-color: #0056b3;
         }
+
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -102,6 +107,7 @@
                 />
 
                 <button type="submit">Iniciar Sesión</button>
+                <p v-if="error" class="error">{{ errorMessage }}</p>
             </form>
         </div>
     </div>
@@ -114,11 +120,21 @@
                 return {
                     username: '',
                     password: '',
+                    error: false,
+                    errorMessage: ''
                 };
             },
             methods: {
                 login() {
-                    window.location.href = 'movies.html';
+                    const validEmail = 'tuemail@gmail.com';  
+                    const validPassword = 'tucontrasena';    
+
+                    if (this.username === validEmail && this.password === validPassword) {
+                        window.location.href = 'movies.html';  
+                    } else {
+                        this.error = true;
+                        this.errorMessage = 'Correo o contraseña incorrectos';
+                    }
                 }
             }
         }).mount('#app');
