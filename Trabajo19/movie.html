@@ -133,13 +133,13 @@
                     v-for="star in 10"
                     :key="star"
                     @click="rateMovie(star)"
-                    :class="[starClass(star), {'disabled': userRating !== null}]"
+                    :class="starClass(star)"
                   >
                     ★
                   </button>
                 </div>
                 <button
-                  v-if="userRating"
+                  v-if="userRating !== null"
                   @click="deleteRating"
                   class="btn btn-danger mt-2"
                 >
@@ -229,10 +229,10 @@
               .catch((error) => console.error(error));
           },
           starClass(star) {
-            if (this.userRating && star <= this.userRating) {
-              return "active";
+            if (this.userRating === null) {
+              return "inactive";
             }
-            return "inactive";
+            return star <= this.userRating ? "active" : "inactive";
           },
         },
         mounted() {

@@ -21,7 +21,7 @@
     }
 
     .btn {
-      align-self: center; 
+      align-self: center;
     }
   </style>
   <body>
@@ -31,11 +31,17 @@
       <div v-if="!loading && movies.length > 0" class="row">
         <div v-for="movie in movies" :key="movie.id" class="col-md-3 mb-4">
           <div class="card h-100">
-            <img :src="'https://image.tmdb.org/t/p/w500/' + movie.poster_path" class="card-img-top" alt="Poster" />
+            <img
+              :src="'https://image.tmdb.org/t/p/w500/' + movie.poster_path"
+              class="card-img-top"
+              alt="Poster"
+            />
             <div class="card-body">
               <h5 class="card-title">{{ movie.title }}</h5>
               <p class="card-text">{{ movie.overview }}</p>
-              <a :href="'movie.html?id=' + movie.id" class="btn btn-primary">Descripcion</a>
+              <a :href="'movie.html?id=' + movie.id" class="btn btn-primary"
+                >Descripcion</a
+              >
             </div>
           </div>
         </div>
@@ -54,21 +60,25 @@
         },
         mounted() {
           axios
-            .get('https://api.themoviedb.org/3/movie/popular?language=es-ES&page=1', {
-              headers: {
-                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjMTYzYmJjMmJhZDEyOWVkMzkwYWExZTExY2Q4NzU1MCIsIm5iZiI6MTcyODYwNTIwNC41Nzg0MzksInN1YiI6IjY3MDc0N2RiNjcxODAxMmZjMjMzNzY3MSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.ycwQ2M_FmKRmNxDGHZZJdByDDQl9c4xgVaLYS4wWsSY' 
+            .get(
+              "https://api.themoviedb.org/3/movie/popular?language=es-ES&page=1",
+              {
+                headers: {
+                  Authorization:
+                    "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjMTYzYmJjMmJhZDEyOWVkMzkwYWExZTExY2Q4NzU1MCIsIm5iZiI6MTcyODYwNTIwNC41Nzg0MzksInN1YiI6IjY3MDc0N2RiNjcxODAxMmZjMjMzNzY3MSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.ycwQ2M_FmKRmNxDGHZZJdByDDQl9c4xgVaLYS4wWsSY",
+                },
               }
-            })
-            .then(response => {
+            )
+            .then((response) => {
               this.movies = response.data.results;
               this.loading = false;
             })
-            .catch(error => {
+            .catch((error) => {
               console.error(error);
               this.loading = false;
             });
         },
-      }).mount('#app');
+      }).mount("#app");
     </script>
   </body>
 </html>
