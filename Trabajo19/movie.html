@@ -172,9 +172,20 @@
             userRating: null,
             loading: true,
             apiKey: "c163bbc2bad129ed390aa1e11cd87550",
+            guestSessionId: null,
           };
         },
         methods: {
+          async fetchGuestSession() {
+            try {
+              const response = await axios.get(
+                `https://api.themoviedb.org/3/authentication/guest_session/new?api_key=${this.apiKey}`
+              );
+              this.guestSessionId = response.data.guest_session_id;
+            } catch (error) {
+              console.error("Error al generar sesión de invitado:", error);
+            }
+          },
           fetchMovieDetails() {
             const urlParams = new URLSearchParams(window.location.search);
             const movieId = urlParams.get("id");
@@ -184,6 +195,7 @@
               )
               .then((response) => {
                 this.movie = response.data;
+                this.loadRatingFromLocalStorage(movieId);
                 this.loading = false;
               })
               .catch((error) => {
@@ -202,29 +214,39 @@
               });
           },
           rateMovie(star) {
+            if (!this.guestSessionId) {
+              alert("No se ha generado una sesión de invitado");
+              return;
+            }
             this.userRating = star;
             const movieId = this.movie.id;
             axios
               .post(
-                `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${this.apiKey}`,
+                `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${this.apiKey}&guest_session_id=${this.guestSessionId}`,
                 {
                   value: star * 2,
                 }
               )
-              .then((response) => {
+              .then(() => {
                 alert("Calificación guardada");
+                this.saveRatingToLocalStorage(movieId, star);
               })
               .catch((error) => console.error(error));
           },
           deleteRating() {
+            if (!this.guestSessionId) {
+              alert("No se ha generado una sesión de invitado");
+              return;
+            }
             const movieId = this.movie.id;
             axios
               .delete(
-                `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${this.apiKey}`
+                `https://api.themoviedb.org/3/movie/${movieId}/rating?api_key=${this.apiKey}&guest_session_id=${this.guestSessionId}`
               )
-              .then((response) => {
+              .then(() => {
                 alert("Calificación eliminada");
                 this.userRating = null;
+                this.removeRatingFromLocalStorage(movieId);
               })
               .catch((error) => console.error(error));
           },
@@ -234,8 +256,21 @@
             }
             return star <= this.userRating ? "active" : "inactive";
           },
+          saveRatingToLocalStorage(movieId, rating) {
+            localStorage.setItem(`movieRating_${movieId}`, rating);
+          },
+          loadRatingFromLocalStorage(movieId) {
+            const savedRating = localStorage.getItem(`movieRating_${movieId}`);
+            if (savedRating) {
+              this.userRating = parseInt(savedRating);
+            }
+          },
+          removeRatingFromLocalStorage(movieId) {
+            localStorage.removeItem(`movieRating_${movieId}`);
+          },
         },
-        mounted() {
+        async mounted() {
+          await this.fetchGuestSession();
           this.fetchMovieDetails();
         },
       }).mount("#app");
